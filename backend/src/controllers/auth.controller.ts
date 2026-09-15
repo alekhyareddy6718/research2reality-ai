@@ -36,7 +36,7 @@ export async function register(req: Request, res: Response) {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       getJwtSecret(),
-      { expiresIn: '7d' }
+      { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
     );
 
     return sendSuccess(res, {
@@ -76,7 +76,7 @@ export async function login(req: Request, res: Response) {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       getJwtSecret(),
-      { expiresIn: '7d' }
+      { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any }
     );
 
     return sendSuccess(res, {

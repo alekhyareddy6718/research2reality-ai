@@ -32,7 +32,7 @@ export function handleUnauthorizedResponse() {
   }
 }
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+async function request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   const token = getValidToken();
 
   const headers: Record<string, string> = {
@@ -79,7 +79,10 @@ export const api = {
   getHealth: () => request('/health'),
   getApiHealth: async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/health');
+      const healthUrl = API_BASE.endsWith('/v1') 
+        ? API_BASE.slice(0, -3) + '/health' 
+        : API_BASE.replace(/\/v1\/?$/, '') + '/health';
+      const res = await fetch(healthUrl);
       return await res.json();
     } catch (err: any) {
       return { success: false, status: 'error', message: err.message };
