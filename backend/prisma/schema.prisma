@@ -1,0 +1,337 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  passwordHash  String
+  name          String
+  role          String          @default("USER") // USER or ADMIN
+  avatar        String?
+  bio           String?
+  organization  String?
+  apiKey        String?
+  aiPreferences String?         // JSON string for default models/prompts
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  projects      Project[]
+  savedPapers   SavedPaper[]
+  analyses      ResearchAnalysis[]
+  gaps          ResearchGap[]
+  innovations   Innovation[]
+  litReviews    LiteratureReview[]
+  notifications Notification[]
+  activities    UserActivity[]
+  conversations ChatConversation[]
+}
+
+model ResearchPaper {
+  id              String             @id @default(uuid())
+  title           String
+  authors         String             // Comma separated or string
+  abstract        String
+  keywords        String             // Comma separated
+  publicationYear Int
+  citations       Int                @default(0)
+  journal         String?
+  doi             String?
+  pdfUrl          String?
+  domain          String             @default("Artificial Intelligence")
+  source          String             @default("ArXiv") // ArXiv, OpenAlex, Semantic Scholar, Manual
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  savedBy         SavedPaper[]
+  projects        Project[]
+  analyses        ResearchAnalysis[]
+  gaps            ResearchGap[]
+  innovations     Innovation[]
+  reports         Report[]
+  startups        StartupIdea[]
+  conversations   ChatConversation[]
+}
+
+model SavedPaper {
+  id        String        @id @default(uuid())
+  userId    String
+  paperId   String
+  notes     String?
+  createdAt DateTime      @default(now())
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper     ResearchPaper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, paperId])
+}
+
+model Project {
+  id               String             @id @default(uuid())
+  userId           String
+  paperId          String?
+  title            String
+  description      String
+  status           String             @default("IN_PROGRESS") // PLANNING, IN_PROGRESS, COMPLETED, ARCHIVED
+  problemStatement String?
+  objectives       String?            // JSON array string
+  architecture     String?
+  modules          String?            // JSON array string
+  techStack        String?            // JSON object string
+  timeline         String?
+  expectedResults  String?
+  futureScope      String?
+  budget           String?            @default("$5,000 - $15,000")
+  progress         Int                @default(10) // 0 - 100 percentage
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper            ResearchPaper?     @relation(fields: [paperId], references: [id], onDelete: SetNull)
+
+  innovations      Innovation[]
+  datasets         Dataset[]
+  algorithms       Algorithm[]
+  experiments      Experiment[]
+  codeSnippets     CodeSnippet[]
+  roadmaps         Roadmap[]
+  reports          Report[]
+  startups         StartupIdea[]
+}
+
+model ResearchAnalysis {
+  id           String        @id @default(uuid())
+  paperId      String
+  userId       String
+  summary      String
+  objectives   String        // JSON array string
+  methodology  String
+  datasets     String        // JSON array string
+  algorithms   String        // JSON array string
+  results      String
+  limitations  String        // JSON array string
+  futureWork   String        // JSON array string
+  createdAt    DateTime      @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper        ResearchPaper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+}
+
+model ResearchGap {
+  id                    String        @id @default(uuid())
+  paperId               String?
+  userId                String
+  gaps                  String        // JSON array string
+  limitations           String        // JSON array string
+  contradictions        String        // JSON array string
+  opportunities         String        // JSON array string
+  futureDirections      String        // JSON array string
+  innovationSuggestions String        // JSON array string
+  confidenceScore       Float         @default(0.88)
+  gapGraphData          String?       // JSON network representation
+  createdAt             DateTime      @default(now())
+
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper                 ResearchPaper? @relation(fields: [paperId], references: [id], onDelete: SetNull)
+}
+
+model Innovation {
+  id                      String        @id @default(uuid())
+  paperId                 String?
+  projectId               String?
+  userId                  String
+  title                   String
+  description             String
+  newFeatures             String        // JSON array string
+  improvedArchitecture    String
+  commercialOpportunities String        // JSON array string
+  patentPotential         String        // HIGH, MEDIUM, LOW
+  innovationScore         Int           @default(85)
+  noveltyDetails          String?       // JSON object string
+  createdAt               DateTime      @default(now())
+
+  user                    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper                   ResearchPaper? @relation(fields: [paperId], references: [id], onDelete: SetNull)
+  project                 Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+model LiteratureReview {
+  id           String   @id @default(uuid())
+  userId       String
+  topic        String
+  introduction String
+  relatedWork  String   // JSON string of categorized papers
+  comparison   String   // JSON string comparison table matrix
+  researchGap  String
+  conclusion   String
+  references   String   // JSON array of citations
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Dataset {
+  id                   String   @id @default(uuid())
+  projectId            String
+  name                 String
+  source               String   // Kaggle, UCI, Hugging Face, Google Dataset Search, OpenML
+  url                  String
+  description          String
+  recommendationReason String
+  createdAt            DateTime @default(now())
+
+  project              Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Algorithm {
+  id           String   @id @default(uuid())
+  projectId    String
+  category     String   // Machine Learning, Deep Learning, Computer Vision, NLP, Time Series, Graph
+  name         String
+  description  String
+  rationale    String
+  codeSnippet  String?
+  createdAt    DateTime @default(now())
+
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Experiment {
+  id              String   @id @default(uuid())
+  projectId       String
+  title           String
+  objective       String
+  variables       String   // JSON object (dependent, independent, controlled)
+  baseline        String
+  evaluationMetrics String // JSON array string
+  workflowSteps   String   // JSON array string
+  expectedResults String
+  ablationStudy   String   // JSON object
+  createdAt       DateTime @default(now())
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Patent {
+  catchId               String   @id @default(uuid())
+  title                 String
+  patentNumber          String
+  description           String
+  similarity            Float    @default(0.42)
+  riskLevel             String   @default("LOW") // LOW, MEDIUM, HIGH
+  commercializationScore Int     @default(80)
+  link                  String
+  createdAt             DateTime @default(now())
+}
+
+model CodeSnippet {
+  id          String   @id @default(uuid())
+  projectId   String
+  filename    String
+  language    String   // Python, TypeScript, React, PyTorch, etc.
+  code        String
+  explanation String
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Roadmap {
+  id         String   @id @default(uuid())
+  projectId  String
+  steps      String   // JSON array of roadmap steps
+  milestones String   // JSON array string
+  progress   Int      @default(15)
+  createdAt  DateTime @default(now())
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String         @id @default(uuid())
+  projectId   String?
+  paperId     String?
+  title       String
+  type        String         // RESEARCH, LITERATURE_REVIEW, PROJECT_PROPOSAL, INNOVATION, PATENT, STARTUP, GRANT
+  content     String         // Full Markdown / HTML content
+  format      String         @default("PDF") // PDF, DOCX, PPT
+  fileUrl     String?
+  createdAt   DateTime       @default(now())
+
+  project     Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  paper       ResearchPaper? @relation(fields: [paperId], references: [id], onDelete: SetNull)
+}
+
+model StartupIdea {
+  id                 String         @id @default(uuid())
+  projectId          String?
+  paperId            String?
+  name               String
+  tagline            String
+  problem            String
+  solution           String
+  businessModel      String
+  revenueModel       String
+  targetAudience     String
+  competitors        String         // JSON array string
+  swot               String         // JSON object string
+  marketingStrategy  String
+  investmentEstimate String         @default("$150,000 - $300,000")
+  pitchDeck          String         // JSON array of slide titles & bullet points
+  createdAt          DateTime       @default(now())
+
+  project            Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  paper              ResearchPaper? @relation(fields: [paperId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ALERT
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserActivity {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatConversation {
+  id        String        @id @default(uuid())
+  userId    String
+  paperId   String?
+  title     String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paper     ResearchPaper? @relation(fields: [paperId], references: [id], onDelete: SetNull)
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  sender         String           // user or assistant
+  content        String
+  references     String?          // JSON array of cited paper sections/pages
+  createdAt      DateTime         @default(now())
+
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}

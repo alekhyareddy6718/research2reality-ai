@@ -1,0 +1,30 @@
+{
+  "name": "research2reality-ai",
+  "version": "1.0.0",
+  "description": "Production-quality AI SaaS platform converting research papers into real projects, innovations, experiments, startups, code, and reports.",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build": "npm run build:backend && npm run build:frontend",
+    "db:push": "npm run db:push --workspace=backend",
+    "db:seed": "npm run db:seed --workspace=backend"
+  },
+  "keywords": [
+    "ai",
+    "research",
+    "saas",
+    "nextjs",
+    "express",
+    "prisma",
+    "typescript"
+  ],
+  "author": "Research2Reality AI Team",
+  "license": "MIT"
+}
